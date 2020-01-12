@@ -6,12 +6,11 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
@@ -26,7 +25,10 @@ public class MemberApiController {
 
     @PostMapping("/api/v2/members")
     public CreateMemberResponse saveMemberV2(@RequestBody @Valid CreateMemberRequest request) {
-        Long id = memberService.join(meber);
+        Member member = new Member();
+        member.setName(request.getName());
+
+        Long id = memberService.join(member);
         return new CreateMemberResponse(id);
     }
 
@@ -36,6 +38,20 @@ public class MemberApiController {
         Member findmember = memberService.findOne(id);
         return new UpdateMemberResponse(findmember.getId(), findmember.getName());
 
+    }
+
+    @GetMapping("/api/v1/members")
+    public List<Member> membersV1(){
+        return memberService.findMembers();
+    }
+
+    @GetMapping("/api/v2/members")
+    public Result membersV2(){
+        List<Member> findMembers = memberService.findMembers();
+        List<MemberDto> collect = findMembers.stream()
+                .map(m -> new MemberDto(m.getName()))
+                .collect(Collectors.toList());
+        return new Result(collect);
     }
 
     @Data
@@ -59,6 +75,18 @@ public class MemberApiController {
     @AllArgsConstructor
     class UpdateMemberResponse{
         private Long id;
+        private String name;
+    }
+
+    @Data
+    @AllArgsConstructor
+    class Result<T> {
+        private T data;
+    }
+
+    @Data
+    @AllArgsConstructor
+    class MemberDto {
         private String name;
     }
 }
